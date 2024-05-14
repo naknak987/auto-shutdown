@@ -13,8 +13,11 @@ var pingTestCmd = &cobra.Command{
 	Short:   "Starts ping testing minutely against the IP address passed.",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		result, _ := utility.SinglePing(args[0])
-		fmt.Printf("Successful pings: %d", result)
+		result, err := utility.SinglePing(args[0])
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Printf("Successful pings: %d\n", result)
 	},
 }
 
