@@ -11,6 +11,8 @@ func SinglePing(ip string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	// Allow privileged ping, see readme.
+	pinger.SetPrivileged(true)
 	pinger.Timeout, err = time.ParseDuration("5s")
 	if err != nil {
 		return 0, err
