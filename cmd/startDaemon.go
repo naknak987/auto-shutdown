@@ -63,7 +63,7 @@ func daemonStart(ip string) {
 			// Shutdown containers
 			result, err := PCT.ShutdownAll()
 			if err != nil {
-				journal.Send(err.Error(), journal.PriAlert, nil)
+				journal.Send(err.Error(), journal.PriCrit, nil)
 			}
 			for _, v := range result {
 				journal.Send(v, journal.PriInfo, nil)
@@ -72,7 +72,7 @@ func daemonStart(ip string) {
 			// Shutdown virtual machines
 			result, err = QM.ShutdownAll()
 			if err != nil {
-				journal.Send(err.Error(), journal.PriAlert, nil)
+				journal.Send(err.Error(), journal.PriCrit, nil)
 			}
 			for _, v := range result {
 				journal.Send(v, journal.PriInfo, nil)
@@ -80,7 +80,13 @@ func daemonStart(ip string) {
 
 			time.Sleep(sleepDuration)
 			// Shutdown system
-			exec.Command("shutdown", "now")
+			journal.Send("Running system shutdown command", journal.PriInfo, nil)
+			sdCmd := exec.Command("shutdown", "+1")
+			sdRes, err := sdCmd.Output()
+			if err != nil {
+				journal.Send(err.Error(), journal.PriCrit, nil)
+			}
+			journal.Send(string(sdRes), journal.PriInfo, nil)
 			daemon.SdNotify(false, daemon.SdNotifyStopping)
 			break
 		}
