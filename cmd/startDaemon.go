@@ -1,12 +1,15 @@
 package cmd
 
 import (
+	"os/exec"
 	"time"
 
 	"gitea.naknak987.com/auto-shutdown-server/v2/utility"
-	"github.com/spf13/cobra"
+	"gitea.naknak987.com/auto-shutdown-server/v2/utility/PCT"
+	"gitea.naknak987.com/auto-shutdown-server/v2/utility/QM"
 	"github.com/coreos/go-systemd/v22/daemon"
 	"github.com/coreos/go-systemd/v22/journal"
+	"github.com/spf13/cobra"
 )
 
 var startDaemonCmd = &cobra.Command{
@@ -49,12 +52,35 @@ func daemonStart(ip string) {
 
 	// Tell systemd we started successfully.
 	daemon.SdNotify(false, daemon.SdNotifyReady)
+	journal.Send("Auto Shutdown Daemon started successfully", journal.PriInfo, nil)
 
 	// Main loop
 	for {
 		// if we exceed 4 failures, shutdown the servers.
 		if failures > 4 {
-			journal.Send("5 failures, shutting down.", journal.PriAlert, nil)
+			journal.Send("5 failures, shutting down.", journal.PriNotice, nil)
+
+			// Shutdown containers
+			result, err := PCT.ShutdownAll()
+			if err != nil {
+				journal.Send(err.Error(), journal.PriAlert, nil)
+			}
+			for _, v := range result {
+				journal.Send(v, journal.PriInfo, nil)
+			}
+
+			// Shutdown virtual machines
+			result, err = QM.ShutdownAll()
+			if err != nil {
+				journal.Send(err.Error(), journal.PriAlert, nil)
+			}
+			for _, v := range result {
+				journal.Send(v, journal.PriInfo, nil)
+			}
+
+			time.Sleep(sleepDuration)
+			// Shutdown system
+			exec.Command("shutdown", "now")
 			daemon.SdNotify(false, daemon.SdNotifyStopping)
 			break
 		}
