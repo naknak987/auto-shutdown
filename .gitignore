@@ -10,6 +10,7 @@ auto-shutdown-server
 *.dll
 *.so
 *.dylib
+auto-shutdown
 
 # Test binary, built with `go test -c`
 *.test

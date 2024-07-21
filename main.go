@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gitea.naknak987.com/auto-shutdown-server/v2/cmd"
+	"github.com/naknak987/auto-shutdown/cmd"
 )
 
 func main() {

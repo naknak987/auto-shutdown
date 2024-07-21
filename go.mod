@@ -1,4 +1,4 @@
-module gitea.naknak987.com/auto-shutdown-server/v2
+module github.com/naknak987/auto-shutdown
 
 go 1.21.5
 

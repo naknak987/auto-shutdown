@@ -4,9 +4,9 @@ import (
 	"os/exec"
 	"time"
 
-	"gitea.naknak987.com/auto-shutdown-server/v2/utility"
-	"gitea.naknak987.com/auto-shutdown-server/v2/utility/PCT"
-	"gitea.naknak987.com/auto-shutdown-server/v2/utility/QM"
+	"github.com/naknak987/auto-shutdown/utility"
+	"github.com/naknak987/auto-shutdown/utility/PCT"
+	"github.com/naknak987/auto-shutdown/utility/QM"
 	"github.com/coreos/go-systemd/v22/daemon"
 	"github.com/coreos/go-systemd/v22/journal"
 	"github.com/spf13/cobra"
