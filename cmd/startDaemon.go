@@ -5,15 +5,15 @@ import (
 	"time"
 
 	"github.com/naknak987/auto-shutdown/utility"
-	"github.com/naknak987/auto-shutdown/utility/PCT"
-	"github.com/naknak987/auto-shutdown/utility/QM"
 	"github.com/coreos/go-systemd/v22/daemon"
 	"github.com/coreos/go-systemd/v22/journal"
 	"github.com/spf13/cobra"
 )
 
+var MinutesWithoutPower int
+
 var startDaemonCmd = &cobra.Command{
-	Use:     "start_daemon",
+	Use:     "start_daemon [ip_address]",
 	Aliases: []string{"start"},
 	Short:   "Starts a daemon that checks if this machine can reach another known machine on the network.",
 	Args:    cobra.ExactArgs(1),
@@ -23,6 +23,7 @@ var startDaemonCmd = &cobra.Command{
 }
 
 func init() {
+	startDaemonCmd.Flags().IntVarP(&MinutesWithoutPower, "minutes-without-power", "m", 5, "how many minutes without power before shutdown")
 	rootCmd.AddCommand(startDaemonCmd)
 }
 
@@ -56,39 +57,22 @@ func daemonStart(ip string) {
 
 	// Main loop
 	for {
-		// if we exceed 4 failures, shutdown the servers.
-		if failures > 4 {
+		// if we exceed (MinutesWithoutPower Int) failures, shutdown the servers.
+		if failures > MinutesWithoutPower {
 			journal.Send("5 failures, shutting down.", journal.PriNotice, nil)
 
-			// Shutdown containers
-			result, err := PCT.ShutdownAll()
+			isPVE, err := utility.DetectPVE()
 			if err != nil {
 				journal.Send(err.Error(), journal.PriCrit, nil)
-			}
-			for _, v := range result {
-				journal.Send(v, journal.PriInfo, nil)
+			} else if isPVE {
+				shutdownPVE()
+				time.Sleep(sleepDuration)
 			}
 
-			// Shutdown virtual machines
-			result, err = QM.ShutdownAll()
-			if err != nil {
-				journal.Send(err.Error(), journal.PriCrit, nil)
-			}
-			for _, v := range result {
-				journal.Send(v, journal.PriInfo, nil)
-			}
+			shutdownLinux();
 
-			time.Sleep(sleepDuration)
-			// Shutdown system
-			journal.Send("Running system shutdown command", journal.PriInfo, nil)
-			sdCmd := exec.Command("shutdown", "+1")
-			sdRes, err := sdCmd.Output()
-			if err != nil {
-				journal.Send(err.Error(), journal.PriCrit, nil)
-			}
-			journal.Send(string(sdRes), journal.PriInfo, nil)
 			daemon.SdNotify(false, daemon.SdNotifyStopping)
-			break
+			break;			
 		}
 
 		// Run ping test.
@@ -97,4 +81,35 @@ func daemonStart(ip string) {
 		// Wait for duration.
 		time.Sleep(sleepDuration)
 	}
+}
+
+func shutdownPVE() {
+	// Shutdown containers
+	result, err := utility.PCTShutdownAll()
+	if err != nil {
+		journal.Send(err.Error(), journal.PriCrit, nil)
+	}
+	for _, v := range result {
+		journal.Send(v, journal.PriInfo, nil)
+	}
+
+	// Shutdown virtual machines
+	result, err = utility.QMShutdownAll()
+	if err != nil {
+		journal.Send(err.Error(), journal.PriCrit, nil)
+	}
+	for _, v := range result {
+		journal.Send(v, journal.PriInfo, nil)
+	}
+}
+
+func shutdownLinux() {
+	// Shutdown system
+	journal.Send("Running system shutdown command", journal.PriInfo, nil)
+	sdCmd := exec.Command("shutdown", "+1")
+	sdRes, err := sdCmd.Output()
+	if err != nil {
+		journal.Send(err.Error(), journal.PriCrit, nil)
+	}
+	journal.Send(string(sdRes), journal.PriInfo, nil)
 }
