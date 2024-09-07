@@ -11,7 +11,7 @@ var rootCmd = &cobra.Command{
 	Long: `Automatically shutdown your server using ping
 to detect a power failure.
 
-Supports Proxmox servers.`,
+Supports Proxmox and bare metal linux servers.`,
 }
 
 func Execute() {
