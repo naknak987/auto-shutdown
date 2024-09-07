@@ -1,4 +1,4 @@
-package PCT
+package utility
 
 // Shutdown methods for PCT machines (Proxmox CT containers)
 
@@ -15,7 +15,7 @@ type ctStat struct {
 	name string
 }
 
-func ShutdownAll() ([]string, error) {
+func PCTShutdownAll() ([]string, error) {
 	var ret []string
 
 	cmd := exec.Command("pct", "list")
@@ -37,9 +37,9 @@ func ShutdownAll() ([]string, error) {
 
 		// Break the line into individual fields.
 		fields := bytes.Fields(ln)
+		fieldCount := len(fields)
 
 		var pctResult ctStat
-		fieldCount := len(fields)
 		if fieldCount != 3 && fieldCount != 4 {
 			return ret, errors.New("unexpected number of fields in output of `pct list`")
 		} else if fieldCount == 3 {

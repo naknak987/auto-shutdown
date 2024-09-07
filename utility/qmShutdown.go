@@ -1,4 +1,4 @@
-package QM
+package utility
 // Shutdown methods for QM machines (Proxmox VMs)
 
 import (
@@ -16,7 +16,7 @@ type vmStat struct {
 	PID string
 }
 
-func ShutdownAll() ([]string, error) {
+func QMShutdownAll() ([]string, error) {
 	var ret []string
 
 	cmd := exec.Command("qm", "list")
